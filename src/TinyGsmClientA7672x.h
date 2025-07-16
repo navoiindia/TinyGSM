@@ -358,11 +358,9 @@ class TinyGsmA7672X : public TinyGsmModem<TinyGsmA7672X>,
       return false;
     }
 
+    // Optional IP check, but don't fail if it doesn't return a value
     sendAT(GF("+IPADDR"));
-    if (waitResponse(10000L) != 1) {
-      DBG("Failed IPADDR");
-      return false;
-    }
+    waitResponse(10000L);
 
     return true;
 }
