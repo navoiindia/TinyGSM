@@ -337,35 +337,35 @@ class TinyGsmA7672X : public TinyGsmModem<TinyGsmA7672X>,
    */
  protected:
   bool gprsConnectImpl(const char* apn, const char* user = nullptr,
-                       const char* pwd = nullptr) {
+                     const char* pwd = nullptr) {
     gprsDisconnect();
 
-    // Define the PDP context
     sendAT(GF("+CGDCONT=1,\"IP\",\""), apn, '"');
-    waitResponse();
+    if (waitResponse() != 1) {
+      DBG("Failed CGDCONT");
+      return false;
+    }
 
-    // Activate the PDP context
     sendAT(GF("+CGACT=1,1"));
-    waitResponse(60000L);
+    if (waitResponse(60000L) != 1) {
+      DBG("Failed CGACT");
+      return false;
+    }
 
-    // Attach to GPRS
-    sendAT(GF("+CGATT=1"));
-    if (waitResponse(60000L) != 1) { return false; }
+    sendAT(GF("+NETOPEN"));
+    if (waitResponse(30000L) != 1) {
+      DBG("Failed NETOPEN");
+      return false;
+    }
 
-    // Set to get data manually
-    sendAT(GF("+CIPRXGET=1"));
-    if (waitResponse() != 1) { return false; }
-
-    // Get Local IP Address, only assigned after connection
-    sendAT(GF("+CGPADDR=1"));
-    if (waitResponse(10000L) != 1) { return false; }
-
-    // Configure Domain Name Server (DNS)
-    sendAT(GF("+CDNSCFG=\"8.8.8.8\",\"8.8.4.4\""));
-    if (waitResponse() != 1) { return false; }
+    sendAT(GF("+IPADDR"));
+    if (waitResponse(10000L) != 1) {
+      DBG("Failed IPADDR");
+      return false;
+    }
 
     return true;
-  }
+}
 
   bool gprsDisconnectImpl() {
     // Shut the TCP/IP connection
